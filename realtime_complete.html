@@ -1,0 +1,86 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase_version9_RealtimeDB(G'sACADEMY初学者用サンプル)</title>
+    <style>.remove:hover{background:aquamarine;}</style>
+</head>
+<body>
+
+    <!-- コンテンツ表示画面 -->
+    <div>
+        <div>
+            名前：<input type="text" id="uname">
+        </div>
+        <div>
+            <textarea id="text" cols="30" rows="10"></textarea>
+            <button id="send">送信</button>
+        </div>
+        <div id="output" style="overflow: auto;height: 300px;"></div>
+    </div>
+
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+      import { getDatabase, ref, push, set, onChildAdded, remove } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
+    
+      const firebaseConfig = {
+        apiKey: "AIzaSyAHlGqbZ0ITPdeA1g5WmnFXr8L3IxuFAUs",
+        authDomain: "gsdemo-9272b.firebaseapp.com",
+        databaseURL: "https://gsdemo-9272b-default-rtdb.firebaseio.com",
+        projectId: "gsdemo-9272b",
+        storageBucket: "gsdemo-9272b.appspot.com",
+        messagingSenderId: "45794949860",
+        appId: "1:45794949860:web:337f96f90e205745380af1"
+      };
+    
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
+      const dbRef = ref(db, "chat");
+    
+      $("#send").on("click", function() {
+        const msg = {
+            uname: $("#uname").val(),
+            text: $("#text").val()
+        };
+        const newPostRef = push(dbRef);
+        set(newPostRef, msg);
+      });
+    
+      $("#text").on("keydown", function(e) {
+        if(e.keyCode == 13) {
+            const msg = {
+                uname: $("#uname").val(),
+                text: $("#text").val()
+            };
+            const newPostRef = push(dbRef);
+            set(newPostRef, msg);
+        }
+      });
+    
+      onChildAdded(dbRef, function(data) {
+        const msg = data.val();
+        const key = data.key;
+        const h = `<p id="msg-${key}">${msg.uname}<br>${msg.text} <button class='remove' data-key='${key}'>削除</button></p>`;
+        $("#output").append(h);
+        $("#output").scrollTop($("#output")[0].scrollHeight);
+    
+        // Attach event listener for delete buttons
+        $(`.remove[data-key='${key}']`).on('click', function() {
+          deleteMessage($(this).data('key'));
+        });
+      });
+    
+      function deleteMessage(key) {
+        const msgRef = ref(db, "chat/" + key);
+        remove(msgRef).then(() => {
+            $(`#msg-${key}`).remove(); // Remove the message element from UI
+        }).catch((error) => {
+            console.error("Delete error:", error);
+        });
+      }
+    </script>
